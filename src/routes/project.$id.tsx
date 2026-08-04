@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft,
   Download,
+  Film,
   ImageIcon,
   Languages,
   Loader2,
@@ -22,7 +23,9 @@ import {
   updateSceneFn,
 } from "@/lib/studio.functions";
 import { buildLines, download, toSrt, toVtt } from "@/lib/subtitles";
+import { downloadBlob, renderProjectVideo, type ExportFormat } from "@/lib/video-export";
 import type { Scene } from "@/lib/studio-types";
+
 
 export const Route = createFileRoute("/project/$id")({
   head: () => ({
