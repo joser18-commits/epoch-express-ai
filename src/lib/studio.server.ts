@@ -210,12 +210,12 @@ export async function updateScene(
   sceneId: string,
   patch: { narration?: string; duration_seconds?: number },
 ): Promise<void> {
-  const update: Record<string, unknown> = {};
+  const update: { narration?: string; audio_url?: string | null; duration_seconds?: number } = {};
   if (patch.narration !== undefined) {
-    update["narration"] = patch.narration;
-    update["audio_url"] = null;
+    update.narration = patch.narration;
+    update.audio_url = null;
   }
-  if (patch.duration_seconds !== undefined) update["duration_seconds"] = patch.duration_seconds;
+  if (patch.duration_seconds !== undefined) update.duration_seconds = patch.duration_seconds;
   if (Object.keys(update).length === 0) return;
   const { error } = await supabaseAdmin.from("scenes").update(update).eq("id", sceneId);
   if (error) throw new Error(error.message);
