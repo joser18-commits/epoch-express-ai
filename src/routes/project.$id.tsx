@@ -101,7 +101,7 @@ function ProjectPage() {
     refresh();
   };
 
-  const sceneDuration = (s: Scene) => durations[s.id] ?? Number(s.duration_seconds) || 5;
+  const sceneDuration = (s: Scene) => durations[s.id] ?? (Number(s.duration_seconds) || 5);
 
   // Preview playback
   useEffect(() => {
