@@ -23,10 +23,10 @@ export const Route = createFileRoute("/")({
         content:
           "Research, script, illustrate and narrate accurate history videos in any language, ready for TikTok, Shorts and YouTube.",
       },
-      { property: "og:title", content: "History Studio AI" },
+      { property: "og:title", content: "History Studio AI — AI history videos for Shorts & Reels" },
       {
         property: "og:description",
-        content: "Turn any historical topic into a scripted, illustrated, narrated video.",
+        content: "Research, script, illustrate and narrate accurate history videos in any language, ready for TikTok, Shorts and YouTube.",
       },
     ],
   }),

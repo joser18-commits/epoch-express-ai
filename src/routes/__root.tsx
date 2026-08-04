@@ -78,10 +78,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "History Studio AI" },
-      { name: "description", content: "Research, script and produce history videos with AI." },
+      { title: "History Studio AI — AI history videos for Shorts & Reels" },
+      { name: "description", content: "Research, script, illustrate and narrate accurate history videos in any language, ready for TikTok, Shorts and YouTube." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:title", content: "History Studio AI — AI history videos for Shorts & Reels" },
+      { name: "twitter:title", content: "History Studio AI — AI history videos for Shorts & Reels" },
+      { property: "og:description", content: "Research, script, illustrate and narrate accurate history videos in any language, ready for TikTok, Shorts and YouTube." },
+      { name: "twitter:description", content: "Research, script, illustrate and narrate accurate history videos in any language, ready for TikTok, Shorts and YouTube." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/93eb63f9-92e2-4c6e-ad4f-d0bdd257d9ad/id-preview-7503fca1--d478e102-ba36-4c95-be95-7cc0aa7b502e.lovable.app-1785852807886.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/93eb63f9-92e2-4c6e-ad4f-d0bdd257d9ad/id-preview-7503fca1--d478e102-ba36-4c95-be95-7cc0aa7b502e.lovable.app-1785852807886.png" },
     ],
     links: [
       {
