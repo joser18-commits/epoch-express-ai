@@ -153,6 +153,10 @@ export async function deleteProject(id: string): Promise<void> {
 }
 
 const ART_PROMPT: Record<string, string> = {
+  "Animated Cartoon":
+    "frame from a modern animated feature film, bold clean outlines, flat cel-shaded colour, exaggerated expressive character acting, dynamic action pose mid-motion, cinematic staging",
+  "Storybook Cartoon":
+    "charming hand-drawn storybook cartoon illustration, warm gouache textures, rounded friendly characters, playful staging",
   Anime: "modern anime key visual, cel shading, expressive linework, dramatic lighting",
   "Pixar-like": "stylized 3D animated film still, soft global illumination, appealing character design",
   Realistic: "photorealistic cinematic still, 50mm lens, natural light, fine detail",
@@ -162,6 +166,7 @@ const ART_PROMPT: Record<string, string> = {
   "Medieval Painting": "illuminated manuscript / medieval panel painting, gold leaf, flattened perspective",
   Manga: "black and white manga panel, screentone, dynamic ink linework",
 };
+
 
 export async function generateSceneImage(sceneId: string): Promise<string> {
   const { data: scene } = await supabaseAdmin.from("scenes").select("*").eq("id", sceneId).single();
