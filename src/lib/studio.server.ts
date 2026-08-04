@@ -186,8 +186,11 @@ export async function generateSceneImage(sceneId: string): Promise<string> {
   const prompt = `${scene.visual_prompt}
 
 Art style: ${ART_PROMPT[project.art_style] ?? project.art_style}.
+Dramatize the moment: characters caught mid-action with clear emotion and body language, cinematic camera angle,
+strong depth so the still reads as a frame lifted from an animated film sequence.
 Historical setting must be period-accurate for: ${project.topic}.
 Composition: ${orientation}. No text, no captions, no watermarks, no modern objects.`;
+
 
   const bytes = await generateImageBytes(prompt);
   const path = await upload(`${project.id}/scene-${scene.idx}.png`, bytes, "image/png");
