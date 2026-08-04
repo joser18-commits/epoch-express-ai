@@ -169,6 +169,45 @@ function ProjectPage() {
     download(`${project.title.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}.txt`, body, "text/plain");
   };
 
+  const exportVideo = async (formats: ExportFormat[]) => {
+    if (!project) return;
+    if (!scenes.some((s) => s.image_url)) {
+      toast.error("Generate scene art first — the video is built from your scene images.");
+      return;
+    }
+    setPlaying(false);
+    const name = (project.title || "history").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+    const payload = scenes.map((s) => ({
+      idx: s.idx,
+      narration: s.narration,
+      on_screen_text: s.on_screen_text,
+      duration_seconds: sceneDuration(s),
+      image_url: s.image_url,
+      audio_url: s.audio_url,
+    }));
+    setExporting(true);
+    try {
+      for (let i = 0; i < formats.length; i++) {
+        const f = formats[i]!;
+        setExportNote(`${f} — preparing…`);
+        const blob = await renderProjectVideo({
+          scenes: payload,
+          format: f,
+          onProgress: (_p, note) => setExportNote(`${f} — ${note}`),
+        });
+        downloadBlob(`${name}-${f.replace(":", "x")}.webm`, blob);
+      }
+      toast.success("Video export complete.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Export failed.");
+    } finally {
+      setExporting(false);
+      setExportNote(null);
+    }
+  };
+
+
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
