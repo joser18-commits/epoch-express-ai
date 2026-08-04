@@ -14,7 +14,116 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      projects: {
+        Row: {
+          accuracy_level: string
+          art_style: string
+          aspect_ratio: string
+          created_at: string
+          duration_seconds: number
+          hook: string | null
+          id: string
+          language: string
+          sources: Json
+          status: string
+          story_style: string
+          summary: string | null
+          title: string
+          topic: string
+          updated_at: string
+          voice: string
+        }
+        Insert: {
+          accuracy_level?: string
+          art_style?: string
+          aspect_ratio?: string
+          created_at?: string
+          duration_seconds?: number
+          hook?: string | null
+          id?: string
+          language?: string
+          sources?: Json
+          status?: string
+          story_style?: string
+          summary?: string | null
+          title?: string
+          topic: string
+          updated_at?: string
+          voice?: string
+        }
+        Update: {
+          accuracy_level?: string
+          art_style?: string
+          aspect_ratio?: string
+          created_at?: string
+          duration_seconds?: number
+          hook?: string | null
+          id?: string
+          language?: string
+          sources?: Json
+          status?: string
+          story_style?: string
+          summary?: string | null
+          title?: string
+          topic?: string
+          updated_at?: string
+          voice?: string
+        }
+        Relationships: []
+      }
+      scenes: {
+        Row: {
+          audio_url: string | null
+          created_at: string
+          duration_seconds: number
+          id: string
+          idx: number
+          image_url: string | null
+          is_dramatized: boolean
+          narration: string
+          on_screen_text: string | null
+          project_id: string
+          source_note: string | null
+          visual_prompt: string
+        }
+        Insert: {
+          audio_url?: string | null
+          created_at?: string
+          duration_seconds?: number
+          id?: string
+          idx: number
+          image_url?: string | null
+          is_dramatized?: boolean
+          narration: string
+          on_screen_text?: string | null
+          project_id: string
+          source_note?: string | null
+          visual_prompt?: string
+        }
+        Update: {
+          audio_url?: string | null
+          created_at?: string
+          duration_seconds?: number
+          id?: string
+          idx?: number
+          image_url?: string | null
+          is_dramatized?: boolean
+          narration?: string
+          on_screen_text?: string | null
+          project_id?: string
+          source_note?: string | null
+          visual_prompt?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scenes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
