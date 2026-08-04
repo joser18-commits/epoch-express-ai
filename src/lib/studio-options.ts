@@ -40,8 +40,10 @@ export const STORY_STYLES = [
 ] as const;
 
 export const ART_STYLES = [
+  "Animated Cartoon",
   "Anime",
   "Pixar-like",
+  "Storybook Cartoon",
   "Realistic",
   "Comic Book",
   "Watercolor",
@@ -49,6 +51,7 @@ export const ART_STYLES = [
   "Medieval Painting",
   "Manga",
 ] as const;
+
 
 export const ACCURACY_LEVELS = ["Beginner", "Student", "College", "Historian"] as const;
 

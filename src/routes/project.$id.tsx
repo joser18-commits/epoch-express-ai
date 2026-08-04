@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft,
   Download,
+  Film,
   ImageIcon,
   Languages,
   Loader2,
@@ -22,7 +23,9 @@ import {
   updateSceneFn,
 } from "@/lib/studio.functions";
 import { buildLines, download, toSrt, toVtt } from "@/lib/subtitles";
+import { downloadBlob, renderProjectVideo, type ExportFormat } from "@/lib/video-export";
 import type { Scene } from "@/lib/studio-types";
+
 
 export const Route = createFileRoute("/project/$id")({
   head: () => ({
@@ -54,6 +57,9 @@ function ProjectPage() {
   const [playing, setPlaying] = useState(false);
   const [activeIdx, setActiveIdx] = useState(0);
   const [target, setTarget] = useState("Spanish");
+  const [exporting, setExporting] = useState(false);
+  const [exportNote, setExportNote] = useState<string | null>(null);
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -166,6 +172,45 @@ function ProjectPage() {
     download(`${project.title.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}.txt`, body, "text/plain");
   };
 
+  const exportVideo = async (formats: ExportFormat[]) => {
+    if (!project) return;
+    if (!scenes.some((s) => s.image_url)) {
+      toast.error("Generate scene art first — the video is built from your scene images.");
+      return;
+    }
+    setPlaying(false);
+    const name = (project.title || "history").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+    const payload = scenes.map((s) => ({
+      idx: s.idx,
+      narration: s.narration,
+      on_screen_text: s.on_screen_text,
+      duration_seconds: sceneDuration(s),
+      image_url: s.image_url,
+      audio_url: s.audio_url,
+    }));
+    setExporting(true);
+    try {
+      for (let i = 0; i < formats.length; i++) {
+        const f = formats[i]!;
+        setExportNote(`${f} — preparing…`);
+        const blob = await renderProjectVideo({
+          scenes: payload,
+          format: f,
+          onProgress: (_p, note) => setExportNote(`${f} — ${note}`),
+        });
+        downloadBlob(`${name}-${f.replace(":", "x")}.webm`, blob);
+      }
+      toast.success("Video export complete.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Export failed.");
+    } finally {
+      setExporting(false);
+      setExportNote(null);
+    }
+  };
+
+
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
@@ -268,6 +313,48 @@ function ProjectPage() {
             <Download className="h-3.5 w-3.5" /> Script
           </button>
         </section>
+
+        {/* One-click video export */}
+        <section className="surface mt-4 rounded-lg p-4">
+          <div className="flex items-center gap-2">
+            <Film className="h-4 w-4 text-primary" />
+            <h2 className="text-base">Export video</h2>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Renders every scene in order with animated camera moves, cross-fades, narration and burned-in
+            subtitles. Rendering runs in real time in this tab — keep it open and in focus.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              className={btnPrimary}
+              disabled={exporting || !!busy}
+              onClick={() => exportVideo(["9:16", "16:9"])}
+            >
+              {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Film className="h-3.5 w-3.5" />}
+              Export both (9:16 + 16:9)
+            </button>
+            <button
+              type="button"
+              className={btn}
+              disabled={exporting || !!busy}
+              onClick={() => exportVideo(["9:16"])}
+            >
+              <Download className="h-3.5 w-3.5" /> Vertical 9:16
+            </button>
+            <button
+              type="button"
+              className={btn}
+              disabled={exporting || !!busy}
+              onClick={() => exportVideo(["16:9"])}
+            >
+              <Download className="h-3.5 w-3.5" /> Horizontal 16:9
+            </button>
+          </div>
+          {exportNote ? <p className="mt-2 text-xs text-primary">{exportNote}</p> : null}
+        </section>
+
+
 
         <section className="surface mt-4 flex flex-wrap items-center gap-2 rounded-lg p-3">
           <Languages className="h-4 w-4 text-primary" />
