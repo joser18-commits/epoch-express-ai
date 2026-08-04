@@ -57,6 +57,9 @@ function ProjectPage() {
   const [playing, setPlaying] = useState(false);
   const [activeIdx, setActiveIdx] = useState(0);
   const [target, setTarget] = useState("Spanish");
+  const [exporting, setExporting] = useState(false);
+  const [exportNote, setExportNote] = useState<string | null>(null);
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
