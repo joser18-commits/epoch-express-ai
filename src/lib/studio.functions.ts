@@ -66,8 +66,8 @@ export const updateSceneFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { updateScene } = await import("./studio.server");
     await updateScene(data.sceneId, {
-      narration: data.narration,
-      duration_seconds: data.durationSeconds,
+      ...(data.narration !== undefined ? { narration: data.narration } : {}),
+      ...(data.durationSeconds !== undefined ? { duration_seconds: data.durationSeconds } : {}),
     });
     return { ok: true };
   });
