@@ -28,6 +28,23 @@ const ACCURACY_GUIDE: Record<string, string> = {
   Historian: "Rigorous and precise: exact dates, primary-source framing, scholarly caveats and debates.",
 };
 
+/** Deterministic development script so no AI credits are spent while building. */
+function mockScript(topic: string, count: number): ScriptResult {
+  return {
+    title: `[Dev mock] ${topic.slice(0, 60)}`,
+    hook: `Mock hook for "${topic}" — generated locally without AI credits.`,
+    summary: "Development placeholder script. Publish or enable real AI to generate the real thing.",
+    sources: [{ title: "Mock source", note: "Placeholder reference used in development mode." }],
+    scenes: Array.from({ length: count }, (_, i) => ({
+      narration: `Scene ${i + 1}: a placeholder narration line about ${topic}. It is long enough to read naturally and to test timing, subtitles and playback in the studio preview.`,
+      visual_prompt: `Placeholder scene ${i + 1} illustrating ${topic}, wide cinematic staging, period-accurate setting.`,
+      on_screen_text: `Scene ${i + 1}`,
+      is_dramatized: i % 2 === 1,
+      source_note: "Mock source note",
+    })),
+  };
+}
+
 type ScriptResult = {
   title: string;
   hook: string;
@@ -79,7 +96,7 @@ Return JSON exactly as:
 {"title":string,"hook":string,"summary":string,"sources":[{"title":string,"note":string}],
 "scenes":[{"narration":string,"visual_prompt":string,"on_screen_text":string,"is_dramatized":boolean,"source_note":string}]}`;
 
-  const result = await chatJson<ScriptResult>(system, user);
+  const result = await chatJson<ScriptResult>(system, user, () => mockScript(input.topic, count));
   if (!result?.scenes?.length) throw new Error("The AI did not return any scenes. Try again.");
 
   const { data: project, error } = await supabaseAdmin
@@ -223,8 +240,17 @@ Composition: ${orientation}. No text, no captions, no watermarks, no modern obje
 export async function generateSceneAudio(sceneId: string, userId: string): Promise<string> {
   const { scene, project } = await ownedScene(sceneId, userId);
 
-  const bytes = await generateSpeechBytes(scene.narration, project.voice, project.story_style, project.language);
-  const path = await upload(`${project.id}/scene-${scene.idx}.mp3`, bytes, "audio/mpeg");
+  const audio = await generateSpeechBytes(
+    scene.narration,
+    project.voice,
+    project.story_style,
+    project.language,
+  );
+  const path = await upload(
+    `${project.id}/scene-${scene.idx}.${audio.ext}`,
+    audio.bytes,
+    audio.contentType,
+  );
   await supabaseAdmin.from("scenes").update({ audio_url: path }).eq("id", sceneId);
   return (await signPath(path))!;
 }
@@ -268,6 +294,13 @@ Lines:
 ${list.map((s, i) => `${i}. ${s.narration} || on-screen: ${s.on_screen_text ?? ""}`).join("\n")}
 
 Return JSON: {"title":string,"scenes":[{"narration":string,"on_screen_text":string}]}`,
+    () => ({
+      title: `${project.title} (${targetLanguage})`,
+      scenes: list.map((s) => ({
+        narration: `[${targetLanguage} mock] ${s.narration}`,
+        on_screen_text: s.on_screen_text ?? "",
+      })),
+    }),
   );
 
   const { data: copy, error } = await supabaseAdmin
