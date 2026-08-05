@@ -197,15 +197,8 @@ const ART_PROMPT: Record<string, string> = {
 };
 
 
-export async function generateSceneImage(sceneId: string): Promise<string> {
-  const { data: scene } = await supabaseAdmin.from("scenes").select("*").eq("id", sceneId).single();
-  if (!scene) throw new Error("Scene not found.");
-  const { data: project } = await supabaseAdmin
-    .from("projects")
-    .select("*")
-    .eq("id", scene.project_id)
-    .single();
-  if (!project) throw new Error("Project not found.");
+export async function generateSceneImage(sceneId: string, userId: string): Promise<string> {
+  const { scene, project } = await ownedScene(sceneId, userId);
 
   const orientation =
     project.aspect_ratio === "16:9"
@@ -227,15 +220,8 @@ Composition: ${orientation}. No text, no captions, no watermarks, no modern obje
   return (await signPath(path))!;
 }
 
-export async function generateSceneAudio(sceneId: string): Promise<string> {
-  const { data: scene } = await supabaseAdmin.from("scenes").select("*").eq("id", sceneId).single();
-  if (!scene) throw new Error("Scene not found.");
-  const { data: project } = await supabaseAdmin
-    .from("projects")
-    .select("*")
-    .eq("id", scene.project_id)
-    .single();
-  if (!project) throw new Error("Project not found.");
+export async function generateSceneAudio(sceneId: string, userId: string): Promise<string> {
+  const { scene, project } = await ownedScene(sceneId, userId);
 
   const bytes = await generateSpeechBytes(scene.narration, project.voice, project.story_style, project.language);
   const path = await upload(`${project.id}/scene-${scene.idx}.mp3`, bytes, "audio/mpeg");
