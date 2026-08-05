@@ -1,4 +1,7 @@
 // Server-only helpers for Lovable AI Gateway calls.
+// In development (or when AI_MOCK=true) every helper returns deterministic mock
+// data instead of calling the gateway, so no AI credits are consumed.
+import { isMockAi, mockImageBytes, mockSpeechWav } from "./ai-mock.server";
 const GATEWAY = "https://ai.gateway.lovable.dev/v1";
 
 function apiKey(): string {
@@ -25,7 +28,8 @@ async function gatewayFetch(path: string, body: unknown): Promise<Response> {
   return res;
 }
 
-export async function chatJson<T>(system: string, user: string): Promise<T> {
+export async function chatJson<T>(system: string, user: string, mock: () => T): Promise<T> {
+  if (isMockAi()) return mock();
   const res = await gatewayFetch("/chat/completions", {
     model: "google/gemini-3.6-flash",
     messages: [
@@ -49,6 +53,7 @@ export async function chatJson<T>(system: string, user: string): Promise<T> {
 
 /** Returns raw PNG/JPEG bytes for a generated image. */
 export async function generateImageBytes(prompt: string): Promise<Uint8Array> {
+  if (isMockAi()) return mockImageBytes(prompt);
   const res = await gatewayFetch("/chat/completions", {
     model: "google/gemini-2.5-flash-image",
     messages: [{ role: "user", content: prompt }],
@@ -75,13 +80,14 @@ const VOICE_MAP: Record<string, { voice: string; instructions: string }> = {
   },
 };
 
-/** Returns MP3 bytes of narration. */
+/** Returns narration audio bytes plus their content type/extension. */
 export async function generateSpeechBytes(
   text: string,
   voiceId: string,
   style: string,
   language: string,
-): Promise<Uint8Array> {
+): Promise<{ bytes: Uint8Array; contentType: string; ext: string }> {
+  if (isMockAi()) return { bytes: mockSpeechWav(text), contentType: "audio/wav", ext: "wav" };
   const v = VOICE_MAP[voiceId] ?? VOICE_MAP["adult_male"]!;
   const res = await gatewayFetch("/audio/speech", {
     model: "openai/gpt-4o-mini-tts",
@@ -90,5 +96,5 @@ export async function generateSpeechBytes(
     response_format: "mp3",
     instructions: `${v.instructions} Narrate in ${language} with natural native pronunciation. Delivery style: ${style}.`,
   });
-  return new Uint8Array(await res.arrayBuffer());
+  return { bytes: new Uint8Array(await res.arrayBuffer()), contentType: "audio/mpeg", ext: "mp3" };
 }
