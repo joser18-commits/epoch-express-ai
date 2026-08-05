@@ -51,6 +51,7 @@ export async function createProject(input: {
   accuracyLevel: string;
   voice: string;
   aspectRatio: string;
+  userId: string;
 }): Promise<string> {
   const count = sceneCountFor(input.durationSeconds);
   const perScene = Math.round((input.durationSeconds / count) * 10) / 10;
@@ -97,6 +98,7 @@ Return JSON exactly as:
       summary: result.summary ?? null,
       sources: result.sources ?? [],
       status: "scripted",
+      user_id: input.userId,
     })
     .select("id")
     .single();
@@ -118,19 +120,45 @@ Return JSON exactly as:
   return project.id;
 }
 
-export async function listProjects(): Promise<Project[]> {
+export async function listProjects(userId: string): Promise<Project[]> {
   const { data, error } = await supabaseAdmin
     .from("projects")
     .select("*")
+    .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(50);
   if (error) throw new Error(error.message);
   return (data ?? []) as unknown as Project[];
 }
 
-export async function getProject(id: string): Promise<ProjectWithScenes> {
-  const { data: project, error } = await supabaseAdmin.from("projects").select("*").eq("id", id).single();
-  if (error || !project) throw new Error("Project not found.");
+/** Loads a project only when it belongs to the caller. Throws otherwise. */
+async function ownedProject(id: string, userId: string) {
+  const { data, error } = await supabaseAdmin
+    .from("projects")
+    .select("*")
+    .eq("id", id)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Project not found.");
+  return data;
+}
+
+/** Loads a scene plus its project only when the project belongs to the caller. */
+async function ownedScene(sceneId: string, userId: string) {
+  const { data: scene, error } = await supabaseAdmin
+    .from("scenes")
+    .select("*")
+    .eq("id", sceneId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!scene) throw new Error("Scene not found.");
+  const project = await ownedProject(scene.project_id, userId);
+  return { scene, project };
+}
+
+export async function getProject(id: string, userId: string): Promise<ProjectWithScenes> {
+  const project = await ownedProject(id, userId);
   const { data: scenes } = await supabaseAdmin
     .from("scenes")
     .select("*")
@@ -147,8 +175,9 @@ export async function getProject(id: string): Promise<ProjectWithScenes> {
   return { project: project as unknown as Project, scenes: signed };
 }
 
-export async function deleteProject(id: string): Promise<void> {
-  const { error } = await supabaseAdmin.from("projects").delete().eq("id", id);
+export async function deleteProject(id: string, userId: string): Promise<void> {
+  await ownedProject(id, userId);
+  const { error } = await supabaseAdmin.from("projects").delete().eq("id", id).eq("user_id", userId);
   if (error) throw new Error(error.message);
 }
 
