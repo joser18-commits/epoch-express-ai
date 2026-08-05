@@ -14,7 +14,7 @@ import {
 } from "@/lib/studio-options";
 import { createProjectFn, deleteProjectFn, listProjectsFn } from "@/lib/studio.functions";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/studio")({
   head: () => ({
     meta: [
       { title: "History Studio AI — AI history videos for Shorts & Reels" },
