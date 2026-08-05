@@ -231,8 +231,10 @@ export async function generateSceneAudio(sceneId: string, userId: string): Promi
 
 export async function updateScene(
   sceneId: string,
+  userId: string,
   patch: { narration?: string; duration_seconds?: number },
 ): Promise<void> {
+  await ownedScene(sceneId, userId);
   const update: { narration?: string; audio_url?: string | null; duration_seconds?: number } = {};
   if (patch.narration !== undefined) {
     update.narration = patch.narration;
@@ -244,9 +246,12 @@ export async function updateScene(
   if (error) throw new Error(error.message);
 }
 
-export async function translateProject(projectId: string, targetLanguage: string): Promise<string> {
-  const { data: project } = await supabaseAdmin.from("projects").select("*").eq("id", projectId).single();
-  if (!project) throw new Error("Project not found.");
+export async function translateProject(
+  projectId: string,
+  targetLanguage: string,
+  userId: string,
+): Promise<string> {
+  const project = await ownedProject(projectId, userId);
   const { data: scenes } = await supabaseAdmin
     .from("scenes")
     .select("*")
