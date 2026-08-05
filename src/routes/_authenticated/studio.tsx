@@ -2,7 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Sparkles, Trash2, Film } from "lucide-react";
+import { Loader2, LogOut, Sparkles, Trash2, Film } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   ACCURACY_LEVELS,
   ART_STYLES,
@@ -12,7 +13,7 @@ import {
   STORY_STYLES,
   VOICES,
 } from "@/lib/studio-options";
-import { createProjectFn, deleteProjectFn, listProjectsFn } from "@/lib/studio.functions";
+import { aiModeFn, createProjectFn, deleteProjectFn, listProjectsFn } from "@/lib/studio.functions";
 
 export const Route = createFileRoute("/_authenticated/studio")({
   head: () => ({
@@ -50,6 +51,14 @@ function Index() {
   const [aspectRatio, setAspect] = useState<string>("9:16");
 
   const projects = useQuery({ queryKey: ["projects"], queryFn: () => listProjectsFn() });
+  const aiMode = useQuery({ queryKey: ["ai-mode"], queryFn: () => aiModeFn() });
+
+  async function signOut() {
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  }
 
   const create = useMutation({
     mutationFn: () =>
@@ -74,14 +83,29 @@ function Index() {
   return (
     <div className="min-h-screen hero-bg">
       <header className="mx-auto max-w-3xl px-5 pt-12 pb-8 text-center">
-        <p className="text-xs uppercase tracking-[0.3em] text-primary">History Studio AI</p>
+        <div className="flex items-center justify-between">
+          <p className="text-xs uppercase tracking-[0.3em] text-primary">History Studio AI</p>
+          <button
+            type="button"
+            onClick={signOut}
+            className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs text-muted-foreground transition hover:border-primary/60 hover:text-primary"
+          >
+            <LogOut className="h-3.5 w-3.5" /> Sign out
+          </button>
+        </div>
         <h1 className="mt-3 text-4xl leading-tight sm:text-5xl">
           Turn any moment in history into a <em className="text-primary">finished video</em>
         </h1>
         <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground">
           Researched script, scene art, narration and subtitles — in your language, in your style.
         </p>
+        {aiMode.data?.mock ? (
+          <p className="mx-auto mt-4 inline-block rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-[11px] text-primary">
+            Development mode — scripts, art and narration are mock placeholders. No AI credits are used.
+          </p>
+        ) : null}
       </header>
+
 
       <main className="mx-auto max-w-3xl px-5 pb-24">
         <section className="surface rounded-xl p-5">
