@@ -286,6 +286,7 @@ Return JSON: {"title":string,"scenes":[{"narration":string,"on_screen_text":stri
       summary: project.summary,
       sources: project.sources,
       status: "scripted",
+      user_id: userId,
     })
     .select("id")
     .single();
