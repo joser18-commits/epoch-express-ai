@@ -28,6 +28,23 @@ const ACCURACY_GUIDE: Record<string, string> = {
   Historian: "Rigorous and precise: exact dates, primary-source framing, scholarly caveats and debates.",
 };
 
+/** Deterministic development script so no AI credits are spent while building. */
+function mockScript(topic: string, count: number): ScriptResult {
+  return {
+    title: `[Dev mock] ${topic.slice(0, 60)}`,
+    hook: `Mock hook for "${topic}" — generated locally without AI credits.`,
+    summary: "Development placeholder script. Publish or enable real AI to generate the real thing.",
+    sources: [{ title: "Mock source", note: "Placeholder reference used in development mode." }],
+    scenes: Array.from({ length: count }, (_, i) => ({
+      narration: `Scene ${i + 1}: a placeholder narration line about ${topic}. It is long enough to read naturally and to test timing, subtitles and playback in the studio preview.`,
+      visual_prompt: `Placeholder scene ${i + 1} illustrating ${topic}, wide cinematic staging, period-accurate setting.`,
+      on_screen_text: `Scene ${i + 1}`,
+      is_dramatized: i % 2 === 1,
+      source_note: "Mock source note",
+    })),
+  };
+}
+
 type ScriptResult = {
   title: string;
   hook: string;
@@ -51,6 +68,7 @@ export async function createProject(input: {
   accuracyLevel: string;
   voice: string;
   aspectRatio: string;
+  userId: string;
 }): Promise<string> {
   const count = sceneCountFor(input.durationSeconds);
   const perScene = Math.round((input.durationSeconds / count) * 10) / 10;
@@ -78,7 +96,7 @@ Return JSON exactly as:
 {"title":string,"hook":string,"summary":string,"sources":[{"title":string,"note":string}],
 "scenes":[{"narration":string,"visual_prompt":string,"on_screen_text":string,"is_dramatized":boolean,"source_note":string}]}`;
 
-  const result = await chatJson<ScriptResult>(system, user);
+  const result = await chatJson<ScriptResult>(system, user, () => mockScript(input.topic, count));
   if (!result?.scenes?.length) throw new Error("The AI did not return any scenes. Try again.");
 
   const { data: project, error } = await supabaseAdmin
@@ -97,6 +115,7 @@ Return JSON exactly as:
       summary: result.summary ?? null,
       sources: result.sources ?? [],
       status: "scripted",
+      user_id: input.userId,
     })
     .select("id")
     .single();
@@ -118,19 +137,45 @@ Return JSON exactly as:
   return project.id;
 }
 
-export async function listProjects(): Promise<Project[]> {
+export async function listProjects(userId: string): Promise<Project[]> {
   const { data, error } = await supabaseAdmin
     .from("projects")
     .select("*")
+    .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(50);
   if (error) throw new Error(error.message);
   return (data ?? []) as unknown as Project[];
 }
 
-export async function getProject(id: string): Promise<ProjectWithScenes> {
-  const { data: project, error } = await supabaseAdmin.from("projects").select("*").eq("id", id).single();
-  if (error || !project) throw new Error("Project not found.");
+/** Loads a project only when it belongs to the caller. Throws otherwise. */
+async function ownedProject(id: string, userId: string) {
+  const { data, error } = await supabaseAdmin
+    .from("projects")
+    .select("*")
+    .eq("id", id)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Project not found.");
+  return data;
+}
+
+/** Loads a scene plus its project only when the project belongs to the caller. */
+async function ownedScene(sceneId: string, userId: string) {
+  const { data: scene, error } = await supabaseAdmin
+    .from("scenes")
+    .select("*")
+    .eq("id", sceneId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!scene) throw new Error("Scene not found.");
+  const project = await ownedProject(scene.project_id, userId);
+  return { scene, project };
+}
+
+export async function getProject(id: string, userId: string): Promise<ProjectWithScenes> {
+  const project = await ownedProject(id, userId);
   const { data: scenes } = await supabaseAdmin
     .from("scenes")
     .select("*")
@@ -147,8 +192,9 @@ export async function getProject(id: string): Promise<ProjectWithScenes> {
   return { project: project as unknown as Project, scenes: signed };
 }
 
-export async function deleteProject(id: string): Promise<void> {
-  const { error } = await supabaseAdmin.from("projects").delete().eq("id", id);
+export async function deleteProject(id: string, userId: string): Promise<void> {
+  await ownedProject(id, userId);
+  const { error } = await supabaseAdmin.from("projects").delete().eq("id", id).eq("user_id", userId);
   if (error) throw new Error(error.message);
 }
 
@@ -168,15 +214,8 @@ const ART_PROMPT: Record<string, string> = {
 };
 
 
-export async function generateSceneImage(sceneId: string): Promise<string> {
-  const { data: scene } = await supabaseAdmin.from("scenes").select("*").eq("id", sceneId).single();
-  if (!scene) throw new Error("Scene not found.");
-  const { data: project } = await supabaseAdmin
-    .from("projects")
-    .select("*")
-    .eq("id", scene.project_id)
-    .single();
-  if (!project) throw new Error("Project not found.");
+export async function generateSceneImage(sceneId: string, userId: string): Promise<string> {
+  const { scene, project } = await ownedScene(sceneId, userId);
 
   const orientation =
     project.aspect_ratio === "16:9"
@@ -198,26 +237,30 @@ Composition: ${orientation}. No text, no captions, no watermarks, no modern obje
   return (await signPath(path))!;
 }
 
-export async function generateSceneAudio(sceneId: string): Promise<string> {
-  const { data: scene } = await supabaseAdmin.from("scenes").select("*").eq("id", sceneId).single();
-  if (!scene) throw new Error("Scene not found.");
-  const { data: project } = await supabaseAdmin
-    .from("projects")
-    .select("*")
-    .eq("id", scene.project_id)
-    .single();
-  if (!project) throw new Error("Project not found.");
+export async function generateSceneAudio(sceneId: string, userId: string): Promise<string> {
+  const { scene, project } = await ownedScene(sceneId, userId);
 
-  const bytes = await generateSpeechBytes(scene.narration, project.voice, project.story_style, project.language);
-  const path = await upload(`${project.id}/scene-${scene.idx}.mp3`, bytes, "audio/mpeg");
+  const audio = await generateSpeechBytes(
+    scene.narration,
+    project.voice,
+    project.story_style,
+    project.language,
+  );
+  const path = await upload(
+    `${project.id}/scene-${scene.idx}.${audio.ext}`,
+    audio.bytes,
+    audio.contentType,
+  );
   await supabaseAdmin.from("scenes").update({ audio_url: path }).eq("id", sceneId);
   return (await signPath(path))!;
 }
 
 export async function updateScene(
   sceneId: string,
+  userId: string,
   patch: { narration?: string; duration_seconds?: number },
 ): Promise<void> {
+  await ownedScene(sceneId, userId);
   const update: { narration?: string; audio_url?: string | null; duration_seconds?: number } = {};
   if (patch.narration !== undefined) {
     update.narration = patch.narration;
@@ -229,9 +272,12 @@ export async function updateScene(
   if (error) throw new Error(error.message);
 }
 
-export async function translateProject(projectId: string, targetLanguage: string): Promise<string> {
-  const { data: project } = await supabaseAdmin.from("projects").select("*").eq("id", projectId).single();
-  if (!project) throw new Error("Project not found.");
+export async function translateProject(
+  projectId: string,
+  targetLanguage: string,
+  userId: string,
+): Promise<string> {
+  const project = await ownedProject(projectId, userId);
   const { data: scenes } = await supabaseAdmin
     .from("scenes")
     .select("*")
@@ -248,6 +294,13 @@ Lines:
 ${list.map((s, i) => `${i}. ${s.narration} || on-screen: ${s.on_screen_text ?? ""}`).join("\n")}
 
 Return JSON: {"title":string,"scenes":[{"narration":string,"on_screen_text":string}]}`,
+    () => ({
+      title: `${project.title} (${targetLanguage})`,
+      scenes: list.map((s) => ({
+        narration: `[${targetLanguage} mock] ${s.narration}`,
+        on_screen_text: s.on_screen_text ?? "",
+      })),
+    }),
   );
 
   const { data: copy, error } = await supabaseAdmin
@@ -266,6 +319,7 @@ Return JSON: {"title":string,"scenes":[{"narration":string,"on_screen_text":stri
       summary: project.summary,
       sources: project.sources,
       status: "scripted",
+      user_id: userId,
     })
     .select("id")
     .single();

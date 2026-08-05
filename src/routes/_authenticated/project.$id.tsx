@@ -27,7 +27,7 @@ import { downloadBlob, renderProjectVideo, type ExportFormat } from "@/lib/video
 import type { Scene } from "@/lib/studio-types";
 
 
-export const Route = createFileRoute("/project/$id")({
+export const Route = createFileRoute("/_authenticated/project/$id")({
   head: () => ({
     meta: [
       { title: "Project — History Studio AI" },
@@ -222,7 +222,7 @@ function ProjectPage() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center">
         <p className="text-sm text-muted-foreground">This project could not be loaded.</p>
-        <Link to="/" className={btn}>
+        <Link to="/studio" className={btn}>
           Back to studio
         </Link>
       </div>
@@ -235,7 +235,7 @@ function ProjectPage() {
   return (
     <div className="min-h-screen hero-bg pb-24">
       <header className="mx-auto max-w-3xl px-5 pt-8">
-        <Link to="/" className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-primary">
+        <Link to="/studio" className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-primary">
           <ArrowLeft className="h-3.5 w-3.5" /> Studio
         </Link>
         <h1 className="mt-3 text-3xl leading-tight">{project.title}</h1>
