@@ -312,6 +312,8 @@ function Index() {
               </select>
             </div>
           </div>
+          )}
+
 
           <div className="mt-4">
             <label className={label}>Storytelling style</label>
