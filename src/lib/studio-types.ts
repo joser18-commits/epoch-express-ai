@@ -28,6 +28,11 @@ export type Project = {
   sources: { title: string; note: string }[];
   status: string;
   created_at: string;
+  series_id?: string | null;
+  episode_number?: number | null;
+  platform?: string;
+  cliffhanger?: string | null;
+  recap?: string | null;
 };
 
 export type ProjectWithScenes = { project: Project; scenes: Scene[] };
@@ -78,3 +83,12 @@ export type SeriesEpisode = {
 };
 
 export type SeriesWithEpisodes = { series: Series; episodes: SeriesEpisode[] };
+
+/** Series fields present on episode projects (null for standalone videos). */
+export type ProjectSeriesFields = {
+  series_id: string | null;
+  episode_number: number | null;
+  platform: string;
+  cliffhanger: string | null;
+  recap: string | null;
+};
