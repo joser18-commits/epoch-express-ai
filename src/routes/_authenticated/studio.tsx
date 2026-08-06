@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Loader2, LogOut, Sparkles, Trash2, Film } from "lucide-react";
+import { Layers, Loader2, LogOut, Sparkles, Trash2, Film } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   ACCURACY_LEVELS,
@@ -12,8 +12,19 @@ import {
   LANGUAGES,
   STORY_STYLES,
   VOICES,
+  PLATFORMS,
+  platformPreset,
+  type PlatformId,
 } from "@/lib/studio-options";
-import { aiModeFn, createProjectFn, deleteProjectFn, listProjectsFn } from "@/lib/studio.functions";
+import {
+  aiModeFn,
+  createProjectFn,
+  createSeriesFn,
+  deleteProjectFn,
+  deleteSeriesFn,
+  listProjectsFn,
+  listSeriesFn,
+} from "@/lib/studio.functions";
 
 export const Route = createFileRoute("/_authenticated/studio")({
   head: () => ({
