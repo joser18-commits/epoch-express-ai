@@ -84,7 +84,43 @@ function Index() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const seriesList = useQuery({ queryKey: ["series-list"], queryFn: () => listSeriesFn() });
+
+  const createSeries = useMutation({
+    mutationFn: () =>
+      createSeriesFn({
+        data: {
+          topic,
+          language,
+          platform,
+          episodeCount,
+          storyStyle,
+          artStyle,
+          accuracyLevel,
+          voice,
+          autoContinue,
+        },
+      }),
+    onSuccess: ({ seriesId }) => {
+      queryClient.invalidateQueries({ queryKey: ["series-list"] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      navigate({ to: "/series/$id", params: { id: seriesId } });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const removeSeries = useMutation({
+    mutationFn: (id: string) => deleteSeriesFn({ data: { id } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["series-list"] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const busy = create.isPending || createSeries.isPending;
   const accuracyIndex = ACCURACY_LEVELS.indexOf(accuracyLevel as (typeof ACCURACY_LEVELS)[number]);
+
 
   return (
     <div className="min-h-screen hero-bg">
