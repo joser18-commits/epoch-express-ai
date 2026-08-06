@@ -49,6 +49,12 @@ function Index() {
   const [accuracyLevel, setAccuracy] = useState<string>("Student");
   const [voice, setVoice] = useState<string>("adult_male");
   const [aspectRatio, setAspect] = useState<string>("9:16");
+  const [mode, setMode] = useState<"single" | "series">("single");
+  const [platform, setPlatform] = useState<PlatformId>("youtube_shorts");
+  const [episodeCount, setEpisodeCount] = useState(5);
+  const [autoContinue, setAutoContinue] = useState(true);
+  const preset = platformPreset(platform);
+
 
   const projects = useQuery({ queryKey: ["projects"], queryFn: () => listProjectsFn() });
   const aiMode = useQuery({ queryKey: ["ai-mode"], queryFn: () => aiModeFn() });
