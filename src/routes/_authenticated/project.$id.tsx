@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { LANGUAGES } from "@/lib/studio-options";
 import {
+  generateNextEpisodeFn,
   generateSceneAudioFn,
   generateSceneImageFn,
   getProjectFn,
@@ -79,6 +80,17 @@ function ProjectPage() {
     onSuccess: () => {
       toast.success("Narration saved — regenerate the voice to match.");
       refresh();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const navigate = useNavigate();
+  const nextEpisode = useMutation({
+    mutationFn: (seriesId: string) => generateNextEpisodeFn({ data: { seriesId } }),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["series-list"] });
+      toast.success(`Episode ${res.number} written.`);
+      navigate({ to: "/project/$id", params: { id: res.projectId } });
     },
     onError: (e: Error) => toast.error(e.message),
   });
