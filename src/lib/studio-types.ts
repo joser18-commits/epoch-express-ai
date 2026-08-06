@@ -31,3 +31,50 @@ export type Project = {
 };
 
 export type ProjectWithScenes = { project: Project; scenes: Scene[] };
+
+export type SeriesBible = {
+  narrator?: string;
+  visual_style?: string;
+  characters?: { name: string; description: string }[];
+  locations?: { name: string; description: string }[];
+  timeline?: string[];
+  recurring_motifs?: string[];
+};
+
+export type EpisodePlanItem = {
+  number: number;
+  title: string;
+  focus: string;
+  cliffhanger: string;
+};
+
+export type Series = {
+  id: string;
+  title: string;
+  topic: string;
+  language: string;
+  platform: string;
+  episode_seconds: number;
+  episode_count: number;
+  story_style: string;
+  art_style: string;
+  accuracy_level: string;
+  voice: string;
+  aspect_ratio: string;
+  overview: string | null;
+  bible: SeriesBible;
+  episode_plan: EpisodePlanItem[];
+  auto_continue: boolean;
+  created_at: string;
+};
+
+export type SeriesEpisode = {
+  id: string;
+  title: string;
+  episode_number: number;
+  status: string;
+  cliffhanger: string | null;
+  summary: string | null;
+};
+
+export type SeriesWithEpisodes = { series: Series; episodes: SeriesEpisode[] };
