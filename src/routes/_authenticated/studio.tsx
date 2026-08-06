@@ -162,18 +162,109 @@ function Index() {
 
       <main className="mx-auto max-w-3xl px-5 pb-24">
         <section className="surface rounded-xl p-5">
+          <div className="mb-4 inline-flex rounded-md border border-border p-0.5">
+            {(["single", "series"] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setMode(m)}
+                className={`rounded px-3 py-1.5 text-xs transition ${
+                  mode === m ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-primary"
+                }`}
+              >
+                {m === "single" ? "Single video" : "Series"}
+              </button>
+            ))}
+          </div>
+
           <label className={label} htmlFor="topic">
-            Historical topic or question
+            {mode === "series" ? "Historical subject for the series" : "Historical topic or question"}
           </label>
           <textarea
             id="topic"
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
             rows={3}
-            placeholder="e.g. Why did the Library of Alexandria really disappear?"
+            placeholder={
+              mode === "series"
+                ? "e.g. The fall of the Roman Republic, told in order"
+                : "e.g. Why did the Library of Alexandria really disappear?"
+            }
             className={`${field} resize-none`}
           />
 
+          {mode === "series" ? (
+            <div className="mt-4 space-y-3">
+              <div>
+                <label className={label}>Target platform</label>
+                <div className="flex flex-wrap gap-2">
+                  {PLATFORMS.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setPlatform(p.id)}
+                      className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                        platform === p.id
+                          ? "border-primary bg-primary/15 text-primary"
+                          : "border-border text-muted-foreground hover:border-primary/50"
+                      }`}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-1.5 text-[11px] text-muted-foreground">
+                  {preset.hint} — the AI sets pacing and length automatically ({preset.episodeSeconds}s,{" "}
+                  {preset.aspectRatio}).
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={label}>Episodes</label>
+                  <select
+                    className={field}
+                    value={episodeCount}
+                    onChange={(e) => setEpisodeCount(Number(e.target.value))}
+                  >
+                    {[3, 4, 5, 6, 8, 10, 12].map((n) => (
+                      <option key={n} value={n}>
+                        {n} episodes
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className={label}>Language</label>
+                  <select className={field} value={language} onChange={(e) => setLanguage(e.target.value)}>
+                    {LANGUAGES.map((l) => (
+                      <option key={l} value={l}>
+                        {l}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className={label}>Voice</label>
+                  <select className={field} value={voice} onChange={(e) => setVoice(e.target.value)}>
+                    {VOICES.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <label className="flex items-end gap-2 pb-2 text-xs text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={autoContinue}
+                    onChange={(e) => setAutoContinue(e.target.checked)}
+                    className="accent-[var(--primary)]"
+                  />
+                  Auto-continue episodes
+                </label>
+              </div>
+            </div>
+          ) : (
           <div className="mt-4 grid grid-cols-2 gap-3">
             <div>
               <label className={label}>Length</label>
@@ -199,6 +290,7 @@ function Index() {
                 ))}
               </select>
             </div>
+
             <div>
               <label className={label}>Language</label>
               <select className={field} value={language} onChange={(e) => setLanguage(e.target.value)}>
