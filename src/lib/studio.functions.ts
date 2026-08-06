@@ -98,3 +98,66 @@ export const aiModeFn = createServerFn({ method: "GET" })
     const { isMockAi } = await import("./ai-mock.server");
     return { mock: isMockAi() };
   });
+
+const CreateSeriesInput = z.object({
+  topic: z.string().min(3).max(500),
+  language: z.string().min(2).max(40),
+  platform: z.enum(["tiktok", "reels", "youtube_shorts", "youtube", "all"]),
+  episodeCount: z.number().int().min(2).max(12),
+  storyStyle: z.string().min(2).max(40),
+  artStyle: z.string().min(2).max(40),
+  accuracyLevel: z.string().min(2).max(40),
+  voice: z.string().min(2).max(40),
+  autoContinue: z.boolean(),
+});
+
+export const createSeriesFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => CreateSeriesInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const { createSeries } = await import("./series.server");
+    return await createSeries({ ...data, userId: context.userId });
+  });
+
+export const listSeriesFn = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { listSeries } = await import("./series.server");
+    return await listSeries(context.userId);
+  });
+
+export const getSeriesFn = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { getSeries } = await import("./series.server");
+    return await getSeries(data.id, context.userId);
+  });
+
+export const generateNextEpisodeFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ seriesId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { generateNextEpisode } = await import("./series.server");
+    return await generateNextEpisode(data.seriesId, context.userId);
+  });
+
+export const deleteSeriesFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { deleteSeries } = await import("./series.server");
+    await deleteSeries(data.id, context.userId);
+    return { ok: true };
+  });
+
+export const setAutoContinueFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ id: z.string().uuid(), value: z.boolean() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { setAutoContinue } = await import("./series.server");
+    await setAutoContinue(data.id, context.userId, data.value);
+    return { ok: true };
+  });

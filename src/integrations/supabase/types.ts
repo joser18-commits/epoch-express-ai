@@ -19,11 +19,16 @@ export type Database = {
           accuracy_level: string
           art_style: string
           aspect_ratio: string
+          cliffhanger: string | null
           created_at: string
           duration_seconds: number
+          episode_number: number | null
           hook: string | null
           id: string
           language: string
+          platform: string
+          recap: string | null
+          series_id: string | null
           sources: Json
           status: string
           story_style: string
@@ -38,11 +43,16 @@ export type Database = {
           accuracy_level?: string
           art_style?: string
           aspect_ratio?: string
+          cliffhanger?: string | null
           created_at?: string
           duration_seconds?: number
+          episode_number?: number | null
           hook?: string | null
           id?: string
           language?: string
+          platform?: string
+          recap?: string | null
+          series_id?: string | null
           sources?: Json
           status?: string
           story_style?: string
@@ -57,11 +67,16 @@ export type Database = {
           accuracy_level?: string
           art_style?: string
           aspect_ratio?: string
+          cliffhanger?: string | null
           created_at?: string
           duration_seconds?: number
+          episode_number?: number | null
           hook?: string | null
           id?: string
           language?: string
+          platform?: string
+          recap?: string | null
+          series_id?: string | null
           sources?: Json
           status?: string
           story_style?: string
@@ -72,7 +87,15 @@ export type Database = {
           user_id?: string
           voice?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "projects_series_id_fkey"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "series"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       scenes: {
         Row: {
@@ -126,6 +149,72 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      series: {
+        Row: {
+          accuracy_level: string
+          art_style: string
+          aspect_ratio: string
+          auto_continue: boolean
+          bible: Json
+          created_at: string
+          episode_count: number
+          episode_plan: Json
+          episode_seconds: number
+          id: string
+          language: string
+          overview: string | null
+          platform: string
+          story_style: string
+          title: string
+          topic: string
+          updated_at: string
+          user_id: string
+          voice: string
+        }
+        Insert: {
+          accuracy_level?: string
+          art_style?: string
+          aspect_ratio?: string
+          auto_continue?: boolean
+          bible?: Json
+          created_at?: string
+          episode_count?: number
+          episode_plan?: Json
+          episode_seconds?: number
+          id?: string
+          language?: string
+          overview?: string | null
+          platform?: string
+          story_style?: string
+          title?: string
+          topic: string
+          updated_at?: string
+          user_id: string
+          voice?: string
+        }
+        Update: {
+          accuracy_level?: string
+          art_style?: string
+          aspect_ratio?: string
+          auto_continue?: boolean
+          bible?: Json
+          created_at?: string
+          episode_count?: number
+          episode_plan?: Json
+          episode_seconds?: number
+          id?: string
+          language?: string
+          overview?: string | null
+          platform?: string
+          story_style?: string
+          title?: string
+          topic?: string
+          updated_at?: string
+          user_id?: string
+          voice?: string
+        }
+        Relationships: []
       }
     }
     Views: {
