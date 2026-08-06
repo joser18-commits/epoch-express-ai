@@ -228,13 +228,17 @@ function Index() {
 
           <button
             type="button"
-            disabled={create.isPending || topic.trim().length < 3}
-            onClick={() => create.mutate()}
+            disabled={busy || topic.trim().length < 3}
+            onClick={() => (mode === "series" ? createSeries.mutate() : create.mutate())}
             className="glow-ring mt-6 flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:brightness-110 disabled:opacity-50"
           >
-            {create.isPending ? (
+            {busy ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" /> Researching & writing…
+              </>
+            ) : mode === "series" ? (
+              <>
+                <Layers className="h-4 w-4" /> Plan series & write episode 1
               </>
             ) : (
               <>
@@ -243,6 +247,35 @@ function Index() {
             )}
           </button>
         </section>
+
+        <section className="mt-10">
+          <h2 className="mb-3 text-xl">Your series</h2>
+          {!seriesList.data?.length ? (
+            <p className="text-sm text-muted-foreground">No series yet — switch to Series mode above.</p>
+          ) : (
+            <ul className="space-y-2">
+              {seriesList.data.map((s) => (
+                <li key={s.id} className="surface flex items-center justify-between gap-3 rounded-lg p-3">
+                  <Link to="/series/$id" params={{ id: s.id }} className="min-w-0 flex-1">
+                    <p className="truncate text-sm">{s.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {platformPreset(s.platform).label} · {s.episode_count} episodes · {s.episode_seconds}s each
+                    </p>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => removeSeries.mutate(s.id)}
+                    className="rounded-md border border-border p-1.5 text-muted-foreground transition hover:border-destructive hover:text-destructive"
+                    aria-label={`Delete ${s.title}`}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
 
         <section className="mt-10">
           <h2 className="mb-3 text-xl">Your projects</h2>
