@@ -21,7 +21,7 @@ async function upload(path: string, bytes: Uint8Array, contentType: string): Pro
   return path;
 }
 
-const ACCURACY_GUIDE: Record<string, string> = {
+export const ACCURACY_GUIDE: Record<string, string> = {
   Beginner: "Simple language, no jargon, focus on the memorable story. Assume no prior knowledge.",
   Student: "Clear explanations with key names, dates and cause-and-effect. High-school level.",
   College: "Nuanced, includes historiographical context, competing interpretations and specifics.",
